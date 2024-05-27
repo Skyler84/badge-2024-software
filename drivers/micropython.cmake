@@ -1,9 +1,5 @@
 # Add custom hardware drivers here
 
-# Add OTA helpers
-include(${CMAKE_CURRENT_LIST_DIR}/tildagon_helpers/micropython.cmake)
-
-
 # Add the display driver
 include(${CMAKE_CURRENT_LIST_DIR}/gc9a01/micropython.cmake)
 
@@ -18,3 +14,9 @@ include(${CMAKE_CURRENT_LIST_DIR}/tildagon_power/tildagon_power.cmake)
 
 # Add OTA helpers
 include(${CMAKE_CURRENT_LIST_DIR}/ota/micropython.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/tildagon_helpers/micropython.cmake)
+
+# Add AW9523B GPIO Expander and micropython tildagon.Pin bindings
+include(${CMAKE_CURRENT_LIST_DIR}/tildagon_pin/micropython.cmake)
+
+include(${CMAKE_CURRENT_LIST_DIR}/tildagon/micropython.cmake)

@@ -1,8 +1,6 @@
 #include "aw9523b.h"
 #include <assert.h>
 
-#include "py/mpprint.h"
-
 #include "tildagon_i2c.h"
 
 #define READ ( MP_MACHINE_I2C_FLAG_WRITE1 | MP_MACHINE_I2C_FLAG_READ | MP_MACHINE_I2C_FLAG_STOP )
@@ -24,16 +22,16 @@ static esp_err_t aw9523b_readregs(aw9523b_device_t *dev, uint8_t reg, uint8_t *r
     tildagon_mux_i2c_obj_t *mux = tildagon_get_mux_obj(7);
     mp_machine_i2c_buf_t buffer[2] = { { .len = 1, .buf = &reg },
                                        { .len = nregs, .buf = regs } };
-    return tildagon_mux_i2c_transaction(mux, dev->i2c_addr, 2, (mp_machine_i2c_buf_t*)&reg, READ);
+    return tildagon_mux_i2c_transaction(mux, dev->i2c_addr, 2, (mp_machine_i2c_buf_t*)&buffer, READ);
 }
 
-static esp_err_t aw9523b_writeregs(aw9523b_device_t *dev, uint8_t reg, uint8_t *regs, size_t nregs) {
+static esp_err_t aw9523b_writeregs(aw9523b_device_t *dev, uint8_t reg, const uint8_t *regs, size_t nregs) {
     uint8_t buf[nregs+1];
     buf[0] = reg;
     memcpy(buf+1, regs, nregs);
     tildagon_mux_i2c_obj_t *mux = tildagon_get_mux_obj(7);
-    mp_machine_i2c_buf_t buffer[2] = { { .len = nregs+1, .buf = &buf } };
-    return tildagon_mux_i2c_transaction(mux, dev->i2c_addr, 1, (mp_machine_i2c_buf_t*)&reg, WRITE);
+    mp_machine_i2c_buf_t buffer[1] = { { .len = nregs+1, .buf = buf } };
+    return tildagon_mux_i2c_transaction(mux, dev->i2c_addr, 1, (mp_machine_i2c_buf_t*)&buffer, WRITE);
 }
 
 void aw9523b_init(aw9523b_device_t *dev) {
@@ -75,28 +73,22 @@ bool aw9523b_pin_get_output(aw9523b_device_t *dev, aw9523b_pin_t pin) {
 }
 
 void aw9523b_pin_set_output(aw9523b_device_t *dev, aw9523b_pin_t pin, aw9523b_pin_state_t state) {
-    mp_printf(&mp_plat_print, "output %p %d %d\n", dev, pin, state);
     aw9523b_check_valid_pin(pin);
-    mp_printf(&mp_plat_print, "check complete\n");
     uint8_t port = aw9523b_portnum(pin);
     uint8_t pin_mask = 1 << aw9523b_portpin(pin);
 
     uint8_t reg = 0x02 + port;
     uint8_t reg_val = 0;
-    mp_printf(&mp_plat_print, "reading regs\n");
     esp_err_t err = aw9523b_readregs(dev, reg, &reg_val, 1);
     if (err < 0) {
         return;
     }
-    mp_printf(&mp_plat_print, "regs read: %02x\n", reg_val);
     if (state) {
         reg_val |= pin_mask;
     } else {
         reg_val &= ~pin_mask;
     }
-    mp_printf(&mp_plat_print, "regs writing: %02x\n", reg_val);
     err = aw9523b_writeregs(dev, reg, &reg_val, 1);
-    mp_printf(&mp_plat_print, "regs written\n");
 }
 
 bool aw9523b_pin_get_direction(aw9523b_device_t *dev, aw9523b_pin_t pin) {
